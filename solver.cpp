@@ -3,13 +3,16 @@
 #include <sstream>
 #include <algorithm>
 #include <string>
+#include <limits>
 using namespace std;
+typedef long double ld;
 
 vector<string> basic;
 vector<string> nonbasic;
-vector<vector<double>> LP;
+vector<vector<ld>> LP;
+ld INF = numeric_limits<double>::max();
 
-void init_LP(vector<vector<double>> input) {
+void init_LP(vector<vector<ld>> input) {
     int n = input[0].size();
     nonbasic.push_back("dummy");
     for (int i = 1; i <= n; i++) {
@@ -21,7 +24,7 @@ void init_LP(vector<vector<double>> input) {
         basic.push_back("w" + to_string(i));
     }
 
-    vector<double> objrow;
+    vector<ld> objrow;
     objrow.push_back(0);
     for (int i = 0; i < n; i++) {
         objrow.push_back(input[0][i]);
@@ -29,7 +32,7 @@ void init_LP(vector<vector<double>> input) {
     LP.push_back(objrow);
 
     for (int i = 1; i < input.size(); i++) {
-        vector<double> row;
+        vector<ld> row;
         row.push_back(input[i][n]);
         for (int j = 0; j < n; j++) {
             row.push_back(-input[i][j]);
@@ -49,14 +52,14 @@ bool is_optimal() {
     return true;
 }
 
-bool is_feasible() {
+bool is_feasible() { // FIXME
     for (int i = 1; i < LP.size(); i++) {
         if (LP[i][0] < 0) return false;
     }
     return true;
 }
 
-bool is_unbounded() {
+bool is_unbounded() { //FIXME
     if (!is_feasible())
         return false;
 
@@ -78,7 +81,7 @@ bool is_unbounded() {
 void output_optimal() {
     cout << "optimal\n" << LP[0][0] << "\n";
 
-    vector<pair<string, double>> ans;
+    vector<pair<string, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
         if (nonbasic[i][0] == 'x') {
             ans.push_back({nonbasic[i], 0});
@@ -102,7 +105,7 @@ void pivot(int row, int col) {
     swap(nonbasic[col], basic[row]);
 
     // basic row
-    double denominator = - LP[row][col];
+    ld denominator = - LP[row][col];
     for (int i = 0; i < LP[row].size(); i++) {
         LP[row][i] = i == col ? (-1.0)/denominator : LP[row][i]/denominator;
     }
@@ -110,12 +113,43 @@ void pivot(int row, int col) {
     // other rows
     for (int i = 0; i < LP.size(); i++) {
         if (i != row) {
-            double coef = LP[i][col];
+            ld coef = LP[i][col];
             for (int j = 0; j < LP[i].size(); j++) {
                 LP[i][j] = LP[row][j] * coef + (j == col ? 0 : LP[i][j]);
             }  
         }
     }
+}
+
+bool largest_coefficient_rule() {
+    ld maxval = 0;
+    int var_enter = -1;
+    for (int i = 1; i < LP[0].size(); i++) {
+        if (LP[0][i] > maxval) {
+            maxval = LP[0][i];
+            var_enter = i;
+        }
+    }
+
+    ld minval = INF;
+    int var_leave = -1;
+    for (int i = 1; i < LP.size(); i++) {
+        if (LP[i][var_enter] < 0) {
+            ld val = LP[i][0] / (-LP[i][var_enter]);
+            if (val < minval) {
+                minval = val;
+                var_leave = i;
+            }
+        }
+    }
+
+    // check unbounded
+    if (var_leave == -1) {
+        return false;
+    }
+
+    pivot(var_leave, var_enter);
+    return true;
 }
 
 void printLP() {
@@ -144,11 +178,11 @@ int main() {
 	cin.tie(NULL);
 
     // read input
-    vector<vector<double>> input;
+    vector<vector<ld>> input;
     string line;
     getline(cin, line);
     while (!line.empty()) {
-        vector<double> row;
+        vector<ld> row;
         istringstream ss(line);
         string word;
         while (ss >> word) {
@@ -161,10 +195,14 @@ int main() {
     init_LP(input);
 
     // solve
-    // while (!is_optimal()) {
-    //     // TODO
-    //     break;
-    // }
+    while (!is_optimal()) {
+        if (!largest_coefficient_rule()) { // unbounded
+            cout << "unbounded\n";
+            return 0;
+        }
+    }
+
+    output_optimal();
 
     return 0;
 }
