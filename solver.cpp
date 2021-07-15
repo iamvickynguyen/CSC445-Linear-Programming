@@ -177,6 +177,32 @@ void to_dual() {
     basic.swap(nonbasic);
 }
 
+bool feasiblize() {
+    vector<ld> objective_row = LP[0];
+    vector<string> basic_tmp = basic;
+    vector<string> nonbasic_tmp = nonbasic;
+
+    for (int i = 0; i < LP[0].size(); i++) {
+        LP[0][i] = 0;
+    }
+
+    to_dual();
+    basic.swap(nonbasic);
+    
+
+    // solve
+    while (!is_optimal()) {
+        if (!largest_coefficient_rule()) { // no feasible point exists
+            return false;
+        }
+    }
+
+    to_dual();
+    basic.swap(nonbasic);
+
+    // TODO: reconstruct objective row
+}
+
 void printLP() {
     cout << "nonbasic: ";
     for (auto item : nonbasic) {
@@ -221,13 +247,18 @@ int main() {
 
     bool is_primal = true;
 
-    // if inital dictionary is infeasible, solve dual dictionary. If both dual and primal are infeasible, transform objective row and find a feasible point
+    // if inital dictionary is infeasible, solve dual dictionary.
+    // if both dual and primal are infeasible, transform objective row and find a feasible point
     if (is_infeasible()) {
         if (is_dual_feasible()) {
             is_primal = false;
             to_dual();
         } else {
-            // TODO
+            if (!feasiblize()) {
+                cout << "infeasible\n";
+                return 0; 
+            }
+            is_primal = false;
         }
     }
 
