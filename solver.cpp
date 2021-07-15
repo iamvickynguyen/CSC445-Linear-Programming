@@ -10,7 +10,7 @@ typedef long double ld;
 vector<string> basic;
 vector<string> nonbasic;
 vector<vector<ld>> LP;
-ld INF = numeric_limits<double>::max();
+ld INF = numeric_limits<ld>::max();
 
 void init_LP(vector<vector<ld>> input) {
     int n = input[0].size();
@@ -52,33 +52,14 @@ bool is_optimal() {
     return true;
 }
 
-bool is_feasible() { // FIXME
+bool is_infeasible() {
     for (int i = 1; i < LP.size(); i++) {
-        if (LP[i][0] < 0) return false;
+        if (LP[0][i] < 0) return true;
     }
-    return true;
-}
-
-bool is_unbounded() { //FIXME
-    if (!is_feasible())
-        return false;
-
-    for (int i = 1; i < LP[0].size(); i++) {
-        if (LP[0][i] > 0) {
-            bool negative = false;
-            for (int j = 1; j < LP.size(); j++) {
-                if (LP[j][i] < 0) {
-                    negative = true;
-                }
-            }
-            if (!negative) return true;
-        }
-    }
-
     return false;
 }
 
-void output_optimal() {
+void output_optimal_primal() {
     cout << "optimal\n" << LP[0][0] << "\n";
 
     vector<pair<string, ld>> ans;
@@ -91,6 +72,29 @@ void output_optimal() {
     for (int i = 1; i < basic.size(); i++) {
         if (basic[i][0] == 'x') {
             ans.push_back({basic[i], LP[i][0]});
+        }
+    }
+
+    sort(ans.begin(), ans.end());
+    for (auto item : ans) {
+        cout << item.second << " ";
+    }
+    cout << "\n";
+}
+
+void output_optimal_dual() {
+    cout << "optimal\n" << -LP[0][0] << "\n";
+
+    vector<pair<string, ld>> ans;
+    for (int i = 1; i < nonbasic.size(); i++) {
+        if (nonbasic[i][0] == 'x') {
+            ans.push_back({nonbasic[i], -LP[0][i]});
+        }
+    }
+
+    for (int i = 1; i < basic.size(); i++) {
+        if (basic[i][0] == 'x') {
+            ans.push_back({basic[i], 0});
         }
     }
 
@@ -152,6 +156,27 @@ bool largest_coefficient_rule() {
     return true;
 }
 
+bool is_dual_feasible() {
+    for (int i = 1; i < LP[0].size(); i++) {
+        if (LP[0][i] > 0) return false;
+    }
+    return true;
+}
+
+void to_dual() {
+    vector<vector<ld>> newLP;
+    for (int i = 0; i < LP[0].size(); i++) {
+        vector<ld> row;
+        for (int j = 0; j < LP.size(); j++) {
+            row.push_back(-LP[j][i]);
+        }
+        newLP.push_back(row);
+    }
+    LP = newLP;
+
+    basic.swap(nonbasic);
+}
+
 void printLP() {
     cout << "nonbasic: ";
     for (auto item : nonbasic) {
@@ -194,6 +219,18 @@ int main() {
 
     init_LP(input);
 
+    bool is_primal = true;
+
+    // if inital dictionary is infeasible, solve dual dictionary. If both dual and primal are infeasible, transform objective row and find a feasible point
+    if (is_infeasible()) {
+        if (is_dual_feasible()) {
+            is_primal = false;
+            to_dual();
+        } else {
+            // TODO
+        }
+    }
+
     // solve
     while (!is_optimal()) {
         if (!largest_coefficient_rule()) { // unbounded
@@ -202,7 +239,11 @@ int main() {
         }
     }
 
-    output_optimal();
-
+    if (is_primal) {
+        output_optimal_primal();
+    } else {
+        output_optimal_dual();
+    }
+    
     return 0;
 }
