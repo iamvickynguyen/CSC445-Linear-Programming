@@ -6,7 +6,7 @@
 #include <limits>
 #include <unordered_map>
 using namespace std;
-typedef long double ld;
+typedef double ld; // FIXME
 
 // #define DEBUG
 
@@ -16,6 +16,10 @@ vector<vector<ld>> LP;
 ld INF = numeric_limits<ld>::max();
 
 void init_LP(vector<vector<ld>> input) {
+    basic.clear();
+    nonbasic.clear();
+    LP.clear();
+    
     int n = input[0].size();
     nonbasic.push_back("dummy");
     for (int i = 1; i <= n; i++) {
@@ -249,7 +253,6 @@ bool feasiblize() {
     }
 
     to_dual();
-    basic.swap(nonbasic);
 
     #ifdef DEBUG
     cout << "DUAL: AFTER CHANGING OBJ\n";
@@ -264,7 +267,6 @@ bool feasiblize() {
     }
 
     to_dual();
-    basic.swap(nonbasic);
 
     #ifdef DEBUG
     cout << "DUAL: AFTER PIVOTING OBJ\n";
@@ -288,8 +290,7 @@ int main() {
     // read input
     vector<vector<ld>> input;
     string line;
-    getline(cin, line);
-    while (!line.empty()) {
+    while (getline(cin, line)) {
         vector<ld> row;
         istringstream ss(line);
         string word;
@@ -297,7 +298,6 @@ int main() {
             row.push_back(stod(word));
         }
         input.push_back(row);
-        getline(cin, line);
     }
 
     init_LP(input);
