@@ -6,7 +6,7 @@
 #include <limits>
 #include <unordered_map>
 using namespace std;
-typedef double ld; // FIXME
+typedef long double ld; // FIXME
 
 #define DEBUG
 
@@ -330,13 +330,18 @@ int main() {
         if (is_dual_feasible()) {
             is_primal = false;
             to_dual();
+            cout << "DUAL IN FEASIBLE -> TO DUAL\n"; // DEBUG
         } else {
             if (!feasiblize()) {
                 cout << "infeasible\n";
                 return 0; 
             }
+            cout << "DUAL IN INFEASIBLE -> FEASIBLIZE\n"; // DEBUG
         }
     }
+
+    cout << "AFTER FEASIBLIZE\n";
+    printLP(); // DEBUG
 
     // solve
     while (!is_optimal()) {
@@ -350,10 +355,16 @@ int main() {
     }
 
     if (is_primal) {
+        cout << "OUTPUT PRIMAL\n";
         output_optimal_primal();
     } else {
+        cout << "OUTPUT DUAL\n";
         output_optimal_dual();
     }
+
+    cout << "FINAL\n";
+    printLP(); // DEBUG
+    cout << "pivots: " << counter << "\n";
     
     return 0;
 }
