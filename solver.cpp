@@ -4,9 +4,10 @@
 #include <algorithm>
 #include <string>
 #include <limits>
+#include <utility>
 #include <unordered_map>
 using namespace std;
-typedef long double ld;
+typedef double ld;
 
 #define DEBUG
 
@@ -68,23 +69,23 @@ bool comparator(const vector<ld>& a, const vector<ld>& b) {
 }
 
 void printLP() {
-    cout << "nonbasic: ";
+    printf("nonbasic: ");
     for (auto item : nonbasic) {
-        cout << item << " ";
+        printf("%s ", item.c_str());
     }
-    cout << "\n";
+    printf("\n");
 
-    cout << "basic: ";
+    printf("basic: ");
     for (auto item : basic) {
-        cout << item << " ";
+        printf("%s ", item.c_str());
     }
-    cout << "\n";
+    printf("\n");
 
     for (auto row : LP) {
         for (auto item : row) {
-            cout << item << " ";
+            printf("%.7g ", item);
         }
-        cout << "\n";
+        printf("\n");
     }
 }
 
@@ -107,7 +108,8 @@ bool is_infeasible() {
 }
 
 void output_optimal_primal() {
-    cout << "optimal\n" << LP[0][0] << "\n";
+    printf("optimal\n");
+    printf("%.7g\n", LP[0][0]);
 
     vector<pair<string, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
@@ -124,13 +126,19 @@ void output_optimal_primal() {
 
     sort(ans.begin(), ans.end());
     for (auto item : ans) {
-        cout << item.second << " ";
+        if (zero_cmp(item.second) == 0) {
+            printf("0 ");
+        } else {
+            printf("%.7g ", item.second);  
+        }
+
     }
-    cout << "\n";
+    printf("\n");
 }
 
 void output_optimal_dual() {
-    cout << "optimal\n" << -LP[0][0] << "\n";
+    printf("optimal\n");
+    printf("%.7g\n", -LP[0][0]);
 
     vector<pair<string, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
@@ -147,22 +155,13 @@ void output_optimal_dual() {
 
     sort(ans.begin(), ans.end());
     for (auto item : ans) {
-        cout << item.second << " ";
+        printf("%.7g ", item.second);
     }
-    cout << "\n";
+    printf("\n");
 }
 
 void pivot(int row, int col) {
     swap(nonbasic[col], basic[row]);
-
-    // // if value is too small, set it to 0
-    // for (int i = 0; i < LP.size(); i++) {
-    //     for (int j = 0; j < LP[0].size(); j++) {
-    //         if (zero_cmp(LP[i][j]) == 0) {
-    //             LP[i][j] = 0;
-    //         }
-    //     }
-    // }
 
     // basic row
     ld denominator = - LP[row][col];
@@ -314,8 +313,6 @@ int main() {
     ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
 
-    cout.precision(7);
-
     // read input
     vector<vector<ld>> input;
     string line;
@@ -331,8 +328,6 @@ int main() {
 
     init_LP(input);
 
-    cout.precision(7);
-
     bool is_primal = true;
 
     // if inital dictionary is infeasible, solve dual dictionary.
@@ -343,7 +338,7 @@ int main() {
             to_dual();
         } else {
             if (!feasiblize()) {
-                cout << "infeasible\n";
+                printf("infeasible\n");
                 return 0; 
             }
         }
@@ -353,9 +348,9 @@ int main() {
     while (!is_optimal()) {
         if (!largest_coefficient_rule()) {
             if (is_primal)
-                cout << "unbounded\n";
+                printf("unbounded\n");
             else
-                cout << "infeasible\n";
+                printf("infeasible\n");
             return 0;
         }
     }

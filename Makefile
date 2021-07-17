@@ -11,4 +11,4 @@ solver.o: solver.cpp
 
 clean:
 	rm -f *.o program \
-	./output/test_LPs/* ./output/test_LPs_volume2/*
+	./tests/output/test_LPs/* ./tests/output/test_LPs_volume2/*
