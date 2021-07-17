@@ -9,8 +9,6 @@ program: solver.o
 solver.o: solver.cpp
 	$(CC) $(CFLAGS) solver.cpp
 
-run:
-	./program
-
 clean:
-	rm -f *.o program
+	rm -f *.o program \
+	./output/test_LPs/* ./output/test_LPs_volume2/*

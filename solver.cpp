@@ -8,12 +8,22 @@
 using namespace std;
 typedef double ld; // FIXME
 
-// #define DEBUG
+#define DEBUG
 
 vector<string> basic;
 vector<string> nonbasic;
 vector<vector<ld>> LP;
-ld INF = numeric_limits<ld>::max();
+const ld INF = numeric_limits<ld>::max();
+const ld EPS = 1e-10;
+
+int counter = 0;
+int THRESHOLD = 1000;
+
+int zero_cmp(ld x) {
+    if (x < -EPS) return -1;
+    if (x > EPS) return 1;
+    return 0;
+}
 
 void init_LP(vector<vector<ld>> input) {
     basic.clear();
@@ -48,6 +58,15 @@ void init_LP(vector<vector<ld>> input) {
     }
 }
 
+bool comparator(const vector<ld>& a, const vector<ld>& b) {
+    for (int i = 0; i < min(a.size(), b.size()); i++) {
+        if (zero_cmp(abs(a[i] - b[i])) != 0) {
+            return a[i] < b[i];
+        }
+    }
+    return a.size() <= b.size();
+}
+
 void printLP() {
     cout << "nonbasic: ";
     for (auto item : nonbasic) {
@@ -71,18 +90,18 @@ void printLP() {
 
 bool is_optimal() {
     for (int i = 1; i < LP[0].size(); i++) {
-        if (LP[0][i] > 0) return false;
+        if (zero_cmp(LP[0][i]) > 0) return false;
     }
 
     for (int i = 1; i < LP.size(); i++) {
-        if (LP[i][0] < 0) return false;
+        if (zero_cmp(LP[i][0]) < 0) return false;
     }
     return true;
 }
 
 bool is_infeasible() {
     for (int i = 1; i < LP.size(); i++) {
-        if (LP[i][0] < 0) return true;
+        if (zero_cmp(LP[i][0]) < 0) return true;
     }
     return false;
 }
@@ -154,6 +173,9 @@ void pivot(int row, int col) {
 }
 
 bool largest_coefficient_rule() {
+    counter++;
+
+    // find largest coefficient non basic variable
     ld maxval = 0;
     int var_enter = -1;
     for (int i = 1; i < LP[0].size(); i++) {
@@ -163,21 +185,42 @@ bool largest_coefficient_rule() {
         }
     }
 
+    // find minimum bound for leaving variable
     ld minval = INF;
-    int var_leave = -1;
+    unordered_map<ld, vector<ld>> minrows;
     for (int i = 1; i < LP.size(); i++) {
-        if (LP[i][var_enter] < 0) {
+        if (zero_cmp(LP[i][var_enter]) < 0) {
             ld val = LP[i][0] / (-LP[i][var_enter]);
-            if (val < minval) {
+            if (val <= minval) {
                 minval = val;
-                var_leave = i;
+                minrows[val].push_back(i);
             }
         }
     }
 
-    // check unbounded
-    if (var_leave == -1) {
-        return false;
+    int var_leave = -1;
+
+    if (minrows.count(minval) == 0) {
+        return false; // unbounded
+    } else if (minrows[minval].size() == 1) {
+        var_leave = minrows[minval][0];
+    } else {
+
+        // get compared vector of all the minimum rows, sort them lexicographically
+        // the basic variable corresponding to the first vector will be the leaving variable
+        vector<vector<ld>> S;
+        for (auto r : minrows[minval]) {
+            vector<ld> v;
+            for (int i = 1; i < LP[r].size(); i++) {
+                ld val = LP[r][i] / (-LP[r][var_enter]);
+                v.push_back(val);
+            }
+            v.push_back(r); // keep row reference
+            S.push_back(v);
+        }
+
+        sort(S.begin(), S.end(), comparator);
+        var_leave = S[0][S[0].size() - 1];
     }
 
     pivot(var_leave, var_enter);
@@ -185,16 +228,8 @@ bool largest_coefficient_rule() {
 }
 
 bool is_dual_feasible() {
-    #ifdef DEBUG
-    cout << "CURRENT LP\n";
-    printLP();
-    #endif
-
     for (int i = 1; i < LP[0].size(); i++) {
-        if (LP[0][i] > 0) {
-            #ifdef DEBUG
-            cout << "This value in dual > 0: " << LP[0][i] << '\n';
-            #endif
+        if (zero_cmp(LP[0][i]) > 0) {
             return false;
         }
     }
@@ -252,14 +287,8 @@ bool feasiblize() {
         LP[0][i] = 0;
     }
 
-    to_dual();
+    to_dual(); 
 
-    #ifdef DEBUG
-    cout << "DUAL: AFTER CHANGING OBJ\n";
-    printLP();
-    #endif    
-
-    // solve
     while (!is_optimal()) {
         if (!largest_coefficient_rule()) { // no feasible point exists
             return false;
@@ -268,24 +297,15 @@ bool feasiblize() {
 
     to_dual();
 
-    #ifdef DEBUG
-    cout << "DUAL: AFTER PIVOTING OBJ\n";
-    printLP();
-    #endif
-
     reconstruct_objective_row(original_obj_row);
-
-    #ifdef DEBUG
-    cout << "DUAL: AFTER RECONSTRUCTING OBJ\n";
-    printLP();
-    #endif
-
     return true;
 }
 
 int main() {
     ios_base::sync_with_stdio(false);
 	cin.tie(NULL);
+
+    cout.precision(7);
 
     // read input
     vector<vector<ld>> input;
@@ -308,44 +328,23 @@ int main() {
     // if both dual and primal are infeasible, transform objective row and find a feasible point
     if (is_infeasible()) {
         if (is_dual_feasible()) {
-            #ifdef DEBUG
-            cout << "DUAL IS FEASIBLE\n";
-            #endif
-
             is_primal = false;
             to_dual();
         } else {
-            #ifdef DEBUG
-            cout << "DUAL IS INFEASIBLE\n";
-            #endif
-
             if (!feasiblize()) {
                 cout << "infeasible\n";
-                #ifdef DEBUG
-                printLP();
-                #endif
-
                 return 0; 
             }
         }
     }
 
-    #ifdef DEBUG
-    if (is_primal)
-        cout << "--- DO OPTIMAL ------\n";
-    else
-        cout << "--- DO DUAL ------\n";
-    printLP();
-    #endif
-
     // solve
     while (!is_optimal()) {
         if (!largest_coefficient_rule()) { // unbounded
-            cout << "unbounded\n";
-            #ifdef DEBUG
-            printLP();
-            #endif
-
+            if (is_primal)
+                cout << "unbounded\n";
+            else
+                cout << "infeasible\n";
             return 0;
         }
     }
