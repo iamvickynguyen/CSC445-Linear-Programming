@@ -6,7 +6,7 @@
 #include <limits>
 #include <unordered_map>
 using namespace std;
-typedef long double ld; // FIXME
+typedef long double ld;
 
 #define DEBUG
 
@@ -154,6 +154,15 @@ void output_optimal_dual() {
 
 void pivot(int row, int col) {
     swap(nonbasic[col], basic[row]);
+
+    // // if value is too small, set it to 0
+    // for (int i = 0; i < LP.size(); i++) {
+    //     for (int j = 0; j < LP[0].size(); j++) {
+    //         if (zero_cmp(LP[i][j]) == 0) {
+    //             LP[i][j] = 0;
+    //         }
+    //     }
+    // }
 
     // basic row
     ld denominator = - LP[row][col];
@@ -322,6 +331,8 @@ int main() {
 
     init_LP(input);
 
+    cout.precision(7);
+
     bool is_primal = true;
 
     // if inital dictionary is infeasible, solve dual dictionary.
@@ -330,22 +341,17 @@ int main() {
         if (is_dual_feasible()) {
             is_primal = false;
             to_dual();
-            cout << "DUAL IN FEASIBLE -> TO DUAL\n"; // DEBUG
         } else {
             if (!feasiblize()) {
                 cout << "infeasible\n";
                 return 0; 
             }
-            cout << "DUAL IN INFEASIBLE -> FEASIBLIZE\n"; // DEBUG
         }
     }
 
-    cout << "AFTER FEASIBLIZE\n";
-    printLP(); // DEBUG
-
     // solve
     while (!is_optimal()) {
-        if (!largest_coefficient_rule()) { // unbounded
+        if (!largest_coefficient_rule()) {
             if (is_primal)
                 cout << "unbounded\n";
             else
@@ -355,16 +361,10 @@ int main() {
     }
 
     if (is_primal) {
-        cout << "OUTPUT PRIMAL\n";
         output_optimal_primal();
     } else {
-        cout << "OUTPUT DUAL\n";
         output_optimal_dual();
     }
-
-    cout << "FINAL\n";
-    printLP(); // DEBUG
-    cout << "pivots: " << counter << "\n";
     
     return 0;
 }
