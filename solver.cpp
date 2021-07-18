@@ -12,6 +12,7 @@ typedef double ld;
 vector<string> basic;
 vector<string> nonbasic;
 vector<vector<ld>> LP;
+vector<ld> objective_function;
 const ld INF = numeric_limits<ld>::max();
 const ld EPS = 1e-8;
 
@@ -52,6 +53,8 @@ void init_LP(vector<vector<ld>> input) {
         }
         LP.push_back(row);
     }
+
+    objective_function = LP[0];
 }
 
 bool comparator(const vector<ld>& a, const vector<ld>& b) {
@@ -81,10 +84,28 @@ bool is_infeasible() {
     return false;
 }
 
-void output_optimal_primal() {
-    printf("optimal\n");
-    printf("%.7g\n", LP[0][0]);
+void print_optimal(vector<pair<int, ld>>& ans) {
+    ld optimal_value = 0;
+    for (int i = 0; i < ans.size(); i++) {
+        auto item = ans[i];
+        if (zero_cmp(item.second) != 0) {
+            optimal_value += (objective_function[i+1] * item.second);
+        }
+    }
 
+    printf("optimal\n");
+    printf("%.7g\n", optimal_value);
+    for (auto item : ans) {
+        if (zero_cmp(item.second) == 0) {
+            printf("0 ");
+        } else {
+            printf("%.7g ", item.second);  
+        }
+    }
+    printf("\n");
+}
+
+void output_optimal_primal() {
     vector<pair<int, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
         if (nonbasic[i][0] == 'x') {
@@ -101,20 +122,10 @@ void output_optimal_primal() {
     }
 
     sort(ans.begin(), ans.end());
-    for (auto item : ans) {
-        if (zero_cmp(item.second) == 0) {
-            printf("0 ");
-        } else {
-            printf("%.7g ", item.second);  
-        }
-    }
-    printf("\n");
+    print_optimal(ans);
 }
 
 void output_optimal_dual() {
-    printf("optimal\n");
-    printf("%.7g\n", -LP[0][0]);
-
     vector<pair<int, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
         if (nonbasic[i][0] == 'x') {
@@ -131,14 +142,7 @@ void output_optimal_dual() {
     }
 
     sort(ans.begin(), ans.end());
-    for (auto item : ans) {
-        if (zero_cmp(item.second) == 0) {
-            printf("0 ");
-        } else {
-            printf("%.7g ", item.second);  
-        }
-    }
-    printf("\n");
+    print_optimal(ans);
 }
 
 void pivot(int row, int col) {
@@ -147,7 +151,7 @@ void pivot(int row, int col) {
     // basic row
     ld denominator = - LP[row][col];
     for (int i = 0; i < LP[row].size(); i++) {
-        LP[row][i] = i == col ? (-1.0)/denominator : LP[row][i]/denominator;
+        LP[row][i] = i == col ? ((ld)-1.0)/denominator : LP[row][i]/denominator;
     }
 
     // other rows
