@@ -111,16 +111,18 @@ void output_optimal_primal() {
     printf("optimal\n");
     printf("%.7g\n", LP[0][0]);
 
-    vector<pair<string, ld>> ans;
+    vector<pair<int, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
         if (nonbasic[i][0] == 'x') {
-            ans.push_back({nonbasic[i], 0});
+            string index = nonbasic[i].substr(1);
+            ans.push_back({stoi(index), 0});
         }
     }
 
     for (int i = 1; i < basic.size(); i++) {
         if (basic[i][0] == 'x') {
-            ans.push_back({basic[i], LP[i][0]});
+            string index = basic[i].substr(1);
+            ans.push_back({stoi(index), LP[i][0]});
         }
     }
 
@@ -131,7 +133,6 @@ void output_optimal_primal() {
         } else {
             printf("%.7g ", item.second);  
         }
-
     }
     printf("\n");
 }
@@ -140,22 +141,28 @@ void output_optimal_dual() {
     printf("optimal\n");
     printf("%.7g\n", -LP[0][0]);
 
-    vector<pair<string, ld>> ans;
+    vector<pair<int, ld>> ans;
     for (int i = 1; i < nonbasic.size(); i++) {
         if (nonbasic[i][0] == 'x') {
-            ans.push_back({nonbasic[i], -LP[0][i]});
+            string index = nonbasic[i].substr(1);
+            ans.push_back({stoi(index), -LP[0][i]});
         }
     }
 
     for (int i = 1; i < basic.size(); i++) {
         if (basic[i][0] == 'x') {
-            ans.push_back({basic[i], 0});
+            string index = basic[i].substr(1);
+            ans.push_back({stoi(index), 0});
         }
     }
 
     sort(ans.begin(), ans.end());
     for (auto item : ans) {
-        printf("%.7g ", item.second);
+        if (zero_cmp(item.second) == 0) {
+            printf("0 ");
+        } else {
+            printf("%.7g ", item.second);  
+        }
     }
     printf("\n");
 }
@@ -360,6 +367,8 @@ int main() {
     } else {
         output_optimal_dual();
     }
+
+
     
     return 0;
 }
