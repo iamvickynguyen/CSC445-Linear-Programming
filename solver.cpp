@@ -9,16 +9,11 @@
 using namespace std;
 typedef double ld;
 
-#define DEBUG
-
 vector<string> basic;
 vector<string> nonbasic;
 vector<vector<ld>> LP;
 const ld INF = numeric_limits<ld>::max();
-const ld EPS = 1e-10;
-
-int counter = 0;
-int THRESHOLD = 1000;
+const ld EPS = 1e-8;
 
 int zero_cmp(ld x) {
     if (x < -EPS) return -1;
@@ -66,27 +61,6 @@ bool comparator(const vector<ld>& a, const vector<ld>& b) {
         }
     }
     return a.size() <= b.size();
-}
-
-void printLP() {
-    printf("nonbasic: ");
-    for (auto item : nonbasic) {
-        printf("%s ", item.c_str());
-    }
-    printf("\n");
-
-    printf("basic: ");
-    for (auto item : basic) {
-        printf("%s ", item.c_str());
-    }
-    printf("\n");
-
-    for (auto row : LP) {
-        for (auto item : row) {
-            printf("%.7g ", item);
-        }
-        printf("\n");
-    }
 }
 
 bool is_optimal() {
@@ -188,7 +162,6 @@ void pivot(int row, int col) {
 }
 
 bool largest_coefficient_rule() {
-    counter++;
 
     // find largest coefficient non basic variable
     ld maxval = 0;
@@ -317,9 +290,6 @@ bool feasiblize() {
 }
 
 int main() {
-    ios_base::sync_with_stdio(false);
-	cin.tie(NULL);
-
     // read input
     vector<vector<ld>> input;
     string line;
@@ -368,7 +338,5 @@ int main() {
         output_optimal_dual();
     }
 
-
-    
     return 0;
 }
