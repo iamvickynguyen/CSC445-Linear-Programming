@@ -1,4 +1,6 @@
-# CSC445-Linear-Programming
+# CSC445 Linear Programming
+
+This is a linear optimization solver, which uses Simplex method.
 
 ## How to run
 `make` : compile
@@ -46,3 +48,6 @@ row 3 : (4/2, 0/2, -2/2, -2/2) = (2, 0, -1, -1)
 
 row 3 < row 1, so w3 leaves, x2 enters.
 
+## Notes
+
+The test cases are provided by Dr. William H. Bird (aka Bill Bird)
